@@ -1,0 +1,32 @@
+//
+//  Phomemo_T02_SwiftApp.swift
+//  Phomemo T02 Swift
+//
+//  Created by Matheus José on 15/02/26.
+//
+
+import SwiftUI
+import SwiftData
+
+@main
+struct Phomemo_T02_SwiftApp: App {
+    var sharedModelContainer: ModelContainer = {
+        let schema = Schema([
+            Item.self,
+        ])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+        .modelContainer(sharedModelContainer)
+    }
+}
