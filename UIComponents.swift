@@ -1,5 +1,10 @@
 import SwiftUI
 
+extension Color {
+    static let phomemoTeal = Color(red: 116/255, green: 183/255, blue: 174/255)
+    static let phomemoPink = Color(red: 250/255, green: 229/255, blue: 228/255)
+}
+
 struct UIComponents {
     
     struct IconButton: View {
@@ -7,6 +12,7 @@ struct UIComponents {
         let action: () -> Void
         var size: CGFloat = 24
         var color: Color = .white
+        var backgroundColor: Color = .phomemoTeal.opacity(0.8) // Default to Teal, but settable
         
         var body: some View {
             Button(action: action) {
@@ -16,7 +22,7 @@ struct UIComponents {
                     .frame(width: size, height: size)
                     .foregroundColor(color)
                     .padding(12)
-                    .background(Color.black.opacity(0.5))
+                    .background(backgroundColor)
                     .clipShape(Circle())
             }
         }
@@ -24,16 +30,17 @@ struct UIComponents {
     
     struct CaptureButton: View {
         let action: () -> Void
+        var themeColor: Color = .phomemoTeal // Default, but settable
         
         var body: some View {
             Button(action: action) {
                 ZStack {
                     Circle()
-                        .stroke(Color.white, lineWidth: 4)
+                        .stroke(themeColor, lineWidth: 4)
                         .frame(width: 72, height: 72)
                     
                     Circle()
-                        .fill(Color.white)
+                        .fill(themeColor)
                         .frame(width: 60, height: 60)
                 }
             }

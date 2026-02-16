@@ -2,97 +2,119 @@ import SwiftUI
 
 struct CameraView: View {
     @StateObject private var viewModel = ContentViewModel()
+    @State private var initialIntensity: Float = 0.5
     
     var body: some View {
-        ZStack {
-            // 1. Camera Feed Layer
-            Color.black.ignoresSafeArea()
-            
-            if let image = viewModel.liveFrame {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .ignoresSafeArea()
-            } else {
-                // Loading State
-                VStack {
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.5)
-                    Text("Starting Camera...")
-                        .foregroundColor(.white)
-                        .padding(.top)
+        GeometryReader { geometry in
+            ZStack {
+                // 1. Camera Feed Layer (Full Screen Aspect Ratio)
+                Color.black.ignoresSafeArea()
+                
+                if let image = viewModel.liveFrame {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .ignoresSafeArea()
+                } else {
+                    VStack {
+                        ProgressView().tint(.white).scaleEffect(1.5)
+                        Text("Starting Camera...").foregroundColor(.white).padding(.top)
+                    }
                 }
-            }
-            
-            // 2. Controls Layer
-            VStack {
-                // Top Bar
-                HStack {
-                    UIComponents.IconButton(icon: "gear", action: {
-                        viewModel.showSettings = true
-                    })
-                    
+                
+                // 2. Combined Gesture Handler (Intensity & Algorithms)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 10)
+                            .onChanged { value in
+                                // Detect direction if not already adjusting
+                                if !viewModel.isAdjustingIntensity {
+                                    // If vertical movement dominates, start intensity adjustment
+                                    if abs(value.translation.height) > abs(value.translation.width) {
+                                        viewModel.isAdjustingIntensity = true
+                                        initialIntensity = viewModel.cameraService.intensity
+                                    }
+                                }
+                                
+                                if viewModel.isAdjustingIntensity {
+                                    // Vertical Drag -> Intensity
+                                    // Drag Up (-Y) -> Increase Intensity
+                                    // Drag Down (+Y) -> Decrease Intensity
+                                    // Scale: 300px = full range
+                                    let delta = Float(-value.translation.height / 300.0)
+                                    let newIntensity = min(max(initialIntensity + delta, 0.0), 1.0)
+                                    viewModel.intensityBinding.wrappedValue = newIntensity
+                                }
+                            }
+                            .onEnded { value in
+                                if viewModel.isAdjustingIntensity {
+                                    viewModel.isAdjustingIntensity = false
+                                } else {
+                                    // Horizontal Swipe for Algorithms
+                                    if abs(value.translation.width) > 50 {
+                                        if value.translation.width < 0 {
+                                            viewModel.nextAlgorithm()
+                                        } else {
+                                            viewModel.prevAlgorithm()
+                                        }
+                                    }
+                                }
+                            }
+                    )
+                
+                // 4. User Interface Layer (Foreground)
+                VStack {
+                    // Top: Algorithm & Settings
+                    // Top Bar (Aligned with Bottom Controls)
+                    // Top Bar
                     Spacer()
                     
-                    UIComponents.IconButton(icon: "arrow.triangle.2.circlepath.camera", action: {
-                        viewModel.toggleCamera()
-                    })
-                }
-                .padding(.horizontal)
-                .padding(.top, 40) // Adjust for safe area
-                
-                Spacer()
-                
-                if !viewModel.isPreviewing {
-                    // Bottom Controls
-                    VStack(spacing: 24) {
-                        // Intensity Slider
-                        VStack(spacing: 8) {
-                            Text(viewModel.cameraService.currentAlgorithm.rawValue)
-                                .foregroundColor(.white)
-                                .font(.caption2)
-                                .padding(4)
-                                .background(Color.black.opacity(0.4))
-                                .cornerRadius(4)
-                            
-                            UIComponents.IntensitySlider(value: viewModel.intensityBinding)
-                                .frame(maxWidth: 280)
-                        }
-                        
-                        // Main Action Bar
-                        HStack(alignment: .center, spacing: 50) {
-                            // Mirror Toggle
-                            UIComponents.IconButton(
-                                icon: viewModel.cameraService.isMirrored ? "arrow.left.and.right.righttriangle.left.righttriangle.right.fill" : "arrow.left.and.right.righttriangle.left.righttriangle.right",
-                                action: { viewModel.toggleMirror() }
-                            )
+
+                    
+                    if !viewModel.isPreviewing {
+                        // Bottom Controls
+                        HStack(alignment: .center, spacing: 60) {
+                            // Camera Toggle (Relocated)
+                            UIComponents.IconButton(icon: "arrow.triangle.2.circlepath.camera", action: {
+                                viewModel.toggleCamera()
+                            }, backgroundColor: viewModel.themeColor.opacity(0.8))
                             
                             // Capture Button
-                            UIComponents.CaptureButton {
+                            UIComponents.CaptureButton(action: {
                                 viewModel.capture()
-                            }
+                            }, themeColor: viewModel.themeColor)
+                            .simultaneousGesture(
+                                DragGesture(minimumDistance: 20)
+                                    .onEnded { value in
+                                        // Swipe Up (-Y) -> Show Settings
+                                        if value.translation.height < -50 {
+                                            viewModel.showSettings = true
+                                        }
+                                    }
+                            )
                             
-                            // Placeholder/Gallery (Empty for now)
-                            Color.clear.frame(width: 44, height: 44)
+                            // Gallery
+                            UIComponents.IconButton(icon: "photo.on.rectangle", action: {
+                                viewModel.showPhotoPicker = true
+                            }, backgroundColor: viewModel.themeColor.opacity(0.8))
                         }
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 30)
+                        .padding(.top, 20)
                     }
-                    .padding(.bottom, 20)
-                    .background(
-                        LinearGradient(gradient: Gradient(colors: [.black.opacity(0), .black.opacity(0.8)]), startPoint: .top, endPoint: .bottom)
-                            .ignoresSafeArea()
-                    )
+                }
+                .allowsHitTesting(true) // Ensure this layer receives touches
+                
+                if viewModel.isPreviewing {
+                    PreviewView(viewModel: viewModel)
+                        .transition(.move(edge: .bottom))
+                        .zIndex(20)
                 }
             }
-            
-            // 3. Preview/Review Layer
-            if viewModel.isPreviewing {
-                PreviewView(viewModel: viewModel)
-                    .transition(.move(edge: .bottom))
-                    .zIndex(10)
-            }
         }
+        .ignoresSafeArea()
         .onAppear {
             viewModel.cameraService.checkPermissions()
             viewModel.cameraService.start()
@@ -100,5 +122,17 @@ struct CameraView: View {
         .sheet(isPresented: $viewModel.showSettings) {
             SettingsView(viewModel: viewModel)
         }
+        .sheet(isPresented: $viewModel.showPhotoPicker) {
+            PhotoPicker(selectedImage: Binding(
+                get: { nil }, // Always show empty state initially or doesn't matter for picker
+                set: { image in
+                    if let image = image {
+                        viewModel.handlePhotoSelection(image)
+                    }
+                }
+            ))
+        }
     }
 }
+
+
