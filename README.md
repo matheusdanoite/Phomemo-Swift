@@ -18,11 +18,15 @@ An iOS application built with SwiftUI and CoreBluetooth for printing images on t
 ## Printer Sharing 
 When you connect your device to a Phomemo T02 printer, you can share the printer with another device via Bluetooth. This allows you to print from multiple devices without having to connect each device to the printer individually. The host device will display a "Host" badge on the Settings menu and how many Clients are connected, the clients will display a "Client" badge on the Settings menu.
 
-## Installation
+## Build Instructions
 1. Clone the repository.
 2. Open `Phomemo T02 Swift.xcodeproj` in Xcode 13 or later.
 3. Ensure your target device is running iOS 15.6+.
 4. Build and run on a physical device (Bluetooth capabilities are required and do not work on the Simulator).
+
+## Installation Instructions
+1. Download the .ipa file on the [releases page](https://github.com/matheusdanoite/Phomemo-Swift/releases)
+2. Sideload it with AltStore or your sideloader of choice on your physical device.
 
 ## Usage
 1. **Connect**: Launch the app and it will automatically connect to the printer.
