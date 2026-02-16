@@ -18,11 +18,15 @@ Um aplicativo iOS construído com SwiftUI e CoreBluetooth para imprimir imagens 
 ## Compartilhamento de Impressora
 Ao conectar seu dispositivo a uma impressora Phomemo T02, você pode compartilhar a impressora com outro dispositivo via Bluetooth. Isso permite imprimir de múltiplos dispositivos sem precisar conectar cada um individualmente à impressora. O dispositivo hospedeiro exibirá um selo "Host" no menu de Settings e quantos Clients estão conectados; os clients exibirão um selo "Client" no menu de Settings.
 
-## Instalação
+## Instruções de Compilação
 1. Clone o repositório.
 2. Abra `Phomemo T02 Swift.xcodeproj` no Xcode 13 ou superior.
 3. Certifique-se de que seu dispositivo alvo esteja rodando iOS 15.6+.
 4. Copile e execute em um dispositivo físico (recursos de Bluetooth são necessários e não funcionam no Simulador).
+
+## Instruções de Instalação
+1. Baixe o arquivo .ipa na [página de lançamentos](https://github.com/matheusdanoite/Phomemo-Swift/releases).
+2. Faça o sideload com o AltStore ou seu sideloader de preferência.
 
 ## Uso
 1. **Conectar**: Inicie o aplicativo e ele se conectará automaticamente à impressora.
